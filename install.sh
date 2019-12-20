@@ -24,25 +24,25 @@ echo "" > $LOGFILE
 echo -e "${BOLD}[~] Installing bug bounty tools...${NORMAL}"
 echo -e "=========================================\n"
 
-
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux...${NORMAL}"
 sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux >> $LOGFILE 2>&1
 
-if [ ! -x go ]; then
+if [ ! -x /usr/local/go/bin/go ]; then
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing golang...${NORMAL}"
     wget https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz -O golang-13.5.tar.gz
-    tar -C /usr/local -xzf golang-13.5.tar.gz
+    sudo tar -C /usr/local -xzf golang-13.5.tar.gz
     rm -rf golang-13.5.tar.gz
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Adding Go to PATH...${NORMAL}"
-    echo "export GOPATH=$HOME/go" >> $HOME/.bashrc
-    echo -e "\nexport PATH=$GOPATH/bin:/usr/local/go/bin:$PATH" >> $HOME/.bashrc
-    source $HOME/.bashrc
-    echo "[!] Done, run \"source $HOME/.bashrc\" when install is done."
+    echo "export GOPATH=$HOME/go" >> $HOME/.profile
+    echo "export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH" >> $HOME/.profile
+    source $HOME/.profile
+    echo "[!] Done, run \"source $HOME/.profile\" when install is done."
 
 fi
 
-if ! testcmd go; then
+if ! testcmd /usr/local/go/bin/go; then
     echo -e "${RED}[-] Go was not installed :/${NORMAL}"
     echo -e "${RED}[-] Exiting${NORMAL}"
     exit
@@ -195,14 +195,14 @@ fi
 
 if [ ! -d "/opt/seclists" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${NORMAL}"
-    git clone https://github.com/danielmiessler/SecLists.git /opt/seclists
+    sudo git clone https://github.com/danielmiessler/SecLists.git /opt/seclists
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
 fi
 
 if ! testcmd whatweb; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing whatweb...${NORMAL}"
-    sudo apt-get install -yq whatweb
+    sudo apt-get install -yq whatweb >> $LOGFILE 2>&1
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing whatweb...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
 fi
@@ -211,8 +211,12 @@ if ! testcmd nmap; then
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${NORMAL}"
     git clone https://github.com/nmap/nmap.git
-    cd nmap && sh ./configure
+    cd nmap
+    echo "[!] Configuring nmap..."
+    sh ./configure >> $LOGFILE 2>&1
+    echo "[!] Running make nmap..."
     make >> $LOGFILE 2>&1
+    echo "[!] Runing make install nmap..."
     make install >> $LOGFILE 2>&1
     cd ..
     rm -rf nmap
