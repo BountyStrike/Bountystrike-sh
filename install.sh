@@ -161,13 +161,6 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
 fi
 
-if ! testcmd googd0rker.py; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing googd0rker.py...${NORMAL}"
-    sudo curl https://raw.githubusercontent.com/LuD1161/GoogD0rker/master/googd0rker.py -o /bin/googd0rker.py
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing googd0rker.py...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
-fi
-
 
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing misc tools${NORMAL}"
@@ -213,13 +206,6 @@ if [ ! -d "/opt/seclists" ]; then
     sudo git clone https://github.com/danielmiessler/SecLists.git /opt/seclists
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
-fi
-
-if ! testcmd whatweb; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing whatweb...${NORMAL}"
-    sudo apt-get install -yq whatweb >> $LOGFILE 2>&1
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing whatweb...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
 fi
 
 if ! testcmd nmap; then
