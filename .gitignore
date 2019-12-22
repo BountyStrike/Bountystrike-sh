@@ -1,3 +1,4 @@
 .vagrant
 vagrant-data/
 *.log
+data/

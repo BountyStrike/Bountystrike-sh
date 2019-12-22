@@ -24,8 +24,8 @@ echo "" > $LOGFILE
 echo -e "${BOLD}[~] Installing bug bounty tools...${NORMAL}"
 echo -e "=========================================\n"
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux...${NORMAL}"
-sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux >> $LOGFILE 2>&1
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver...${NORMAL}"
+sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver >> $LOGFILE 2>&1
 
 if [ ! -x /usr/local/go/bin/go ]; then
 
@@ -54,6 +54,21 @@ echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing go tools${NORMAL}"
 echo "-----------------------------------------"
 
 # Check if the tool exists in $PATH before installing it
+
+if ! testcmd amass; then
+    export GO111MODULE=on
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing amass...${NORMAL}"
+    go get -u github.com/OWASP/Amass/v3/...
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing amass...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
+fi
+
+if ! testcmd subfinder; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing subfinder...${NORMAL}"
+    go get github.com/projectdiscovery/subfinder/cmd/subfinder
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing subfinder...${LIGHT_YELLOW}[SKIPPED]${NORMAL}"
+fi
 
 if ! testcmd gobuster; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gobuster...${NORMAL}"

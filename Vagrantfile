@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
   # your network.
   # config.vm.network "public_network"
 
-  config.vm.synced_folder ".", "/vagrant_data"
+  config.vm.synced_folder "data", "/vagrant_data"
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
