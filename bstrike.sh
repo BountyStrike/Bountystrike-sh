@@ -86,7 +86,7 @@ subdomainDiscovery() {
     #Rapid7 FDNS here
     
     #runbanner "Brute forcing with commonspeak2 wordlist"
-    #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2-subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
+    #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
 }
 

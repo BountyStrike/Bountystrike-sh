@@ -236,14 +236,14 @@ fi
 
 if ! testcmd scout; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${NORMAL}"
-    python3.7 -m pip install scoutesuite --user
+    python3.7 -m pip install scoutsuite --user
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if ! testcmd aws; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${NORMAL}"
-    python3.7 -m pip install scoutesuite --user
+    python3.7 -m pip install awscli --user
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
@@ -297,9 +297,16 @@ fi
 
 if [ ! -f "/opt/wordlists/commonspeak2-subdomains.txt" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${NORMAL}"
-    sudo git clone https://github.com/assetnote/commonspeak2-wordlists /opt/wordlists/commonspeak2-subdomains.txt
+    sudo git clone https://github.com/assetnote/commonspeak2-wordlists /opt/wordlists/commonspeak2
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "/opt/wordlists/api_wordlist" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${NORMAL}"
+    sudo git clone https://github.com/chrislockard/api_wordlist /opt/wordlists/api_wordlists
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if ! testcmd nmap; then
