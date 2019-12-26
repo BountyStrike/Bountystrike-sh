@@ -13,6 +13,7 @@ The following tools and worldlists will be installed:
 * [Subfinder](https://github.com/projectdiscovery/subfinder)
 * [Gobuster](https://github.com/OJ/gobuster)
 * [Waybackurls](http://github.com/tomnomnom/waybackurls)
+* [WaybackUnifier](https://github.com/mhmdiaa/waybackunifier)
 * [httprobe](github.com/tomnomnom/httprobe)
 * meg
 * unfurl
@@ -21,14 +22,20 @@ The following tools and worldlists will be installed:
 * Subzy
 * SubOver
 * Aquatone
+* gitrob
 * dnsgen
 * truffleHog
-* googd0rker.py
 * massdns
 * masscan
 * nmap
 * SecLists
-* Whatweb
+
+Other stuff that will be installed as well:
+* Python 3.7.6
+* NodeJS
+* npm
+* Docker CE
+* Ruby
 
 ## Install
 Just run `bash install.sh` to get the bug hunting environment. So far only tested for Ubuntu 18.01.

@@ -44,6 +44,17 @@ okURLs() {
     done < waybackurls.txt
 }
 
+domainExtract() {
+    while read u; do
+        curl -s $u | grep -Po "(\/)((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)*((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)((?:[a-zA-Z\-_\/\:\.0-9\{\}]+))" | sort -u | sed 's/^/http:\/\/URL/' >> paths.txt
+    done < alive-js-files.txt
+}
+
+certspotter(){ 
+curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u 
+}
+
+
 subdomainDiscovery() {
     runBanner "Subdomain Discovery with amass, subfinder and gobuster"
     # Passively find subdomains
@@ -69,6 +80,14 @@ subdomainDiscovery() {
     runBanner "Httprobe"
     cat $FINAL_DOMAINS | httprobe > alive.txt
 
+    runBanner "Certspotter"
+    certspotter $TARGET > certspotter.txt
+
+    #Rapid7 FDNS here
+    
+    #runbanner "Brute forcing with commonspeak2 wordlist"
+    #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2-subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
+
 }
 
 contentDiscovery(){
@@ -82,8 +101,24 @@ contentDiscovery(){
 
     # Check URLs, 404 to external domains may be vulnarble to subdomain takeover
     # URLs with 200 may contain juicy stuff
-    runBanner "okURLs"
-    okURLs > waybackurls-with-statuscode.txt
+    # maybe a second crawler would be good, to crawl the site now and specifically look for broken links to subdomain takeover services.
+    runBanner "fff"
+    cat waybackurls.txt | fff -S -o htmlstorage
+
+    runBanner "GetJS"
+    cat alive.txt | getJS -complete -output alive-js-files.txt
+
+    runBanner "Extracting paths from js files"
+    domainExtract
+
+    ## meg
+    # find a good wordlist to use for brutforcing with meg
+
+    ## Retire.js
+
+    ## One liner to import whole list of subdomains into Burp suite for automated scanning!
+    # cat <file-name> | parallel -j 200 curl -L -o /dev/null {} -x 127.0.0.1:8080 -k -s
+    # use burp proxy to populate burp with urls. Or maybe import files
 }
 
 networkDiscovery(){
@@ -133,7 +168,7 @@ echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 # [] brute force URL paths
 # [] save header respones
 # [] install mullvad, use wireguard
-# [] use nahamsec rootdomains script
+# [] use nahamsec rootdomains script?
 # [] database to store data
 # [] notification for new domains and diffs 
 # [] check for vulnerable javascript files

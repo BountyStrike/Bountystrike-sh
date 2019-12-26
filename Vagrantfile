@@ -5,7 +5,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.box = "ubuntu/xenial64"
 
-  #config.vm.network "forwarded_port", guest: 8000, host: 8000
+  config.vm.network "forwarded_port", guest: 8000, host: 8000
 
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
     cd Python-$PYTHON_VERSION
     ./configure
     make -j 1
-    make altinstall
+    sudo make altinstall
     cd ..
     rm -rf Python-$PYTHON_VERSION
   SHELL
