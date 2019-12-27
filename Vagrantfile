@@ -30,8 +30,8 @@ Vagrant.configure("2") do |config|
     sudo pip install --upgrade pip
     sudo pip install docker-compose
     sudo apt-get -y install docker-ce docker-ce-cli containerd.io
-    PYTHON_VERSION="3.8.1"
-    PYTHON_FILE="Python-3.8.1.tgz"
+    PYTHON_VERSION="3.7.6"
+    PYTHON_FILE="Python-3.7.6.tgz"
     wget https://www.python.org/ftp/python/$PYTHON_VERSION/$PYTHON_FILE
     tar -xvf $PYTHON_FILE
     rm -rf $PYTHON_FILE

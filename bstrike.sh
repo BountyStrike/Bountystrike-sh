@@ -50,6 +50,24 @@ domainExtract() {
     done < alive-js-files.txt
 }
 
+# https://github.com/nahamsec/crtndstry/blob/master/crtndstry.sh
+certdata(){
+	#give it patterns to look for within crt.sh for example %api%.site.com
+	declare -a arr=("api" "corp" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
+	for i in "${arr[@]}"
+	do
+		#get a list of domains based on our patterns in the array
+		crtsh=$(curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee -a rawdata/$1-crtsh.txt )
+	done
+		#get a list of domains from certspotter
+		certspotter=$(curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep -w $1\$ | tee rawdata/$1-certspotter.txt)
+		#get a list of domains from digicert
+		digicert=$(curl -s https://ssltools.digicert.com/chainTester/webservice/ctsearch/search?keyword=$1 -o rawdata/$1-digicert.json) 
+		#echo "$crtsh"
+		#echo "$certspotter"
+		#echo "$digicert"
+}
+
 certspotter(){ 
 curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u 
 }
@@ -102,6 +120,7 @@ contentDiscovery(){
     # Check URLs, 404 to external domains may be vulnarble to subdomain takeover
     # URLs with 200 may contain juicy stuff
     # maybe a second crawler would be good, to crawl the site now and specifically look for broken links to subdomain takeover services.
+    # run against alive.txt to get all HTTP codes?
     runBanner "fff"
     cat waybackurls.txt | fff -S -o htmlstorage
 
@@ -144,7 +163,11 @@ visualDiscovery(){
 
 vulnerabilityDiscovery(){
     runBanner "Subdomain takeover checks"
-    subzy -targets $FINAL_DOMAINS | tee -a subtakeovers-$NOW.txt 
+    subzy -targets $FINAL_DOMAINS | tee -a subtakeovers-$NOW.txt
+
+    # CRLF scanner
+
+    # open redirerct scanner 
 }
 
 
