@@ -189,7 +189,7 @@ echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 # [x] order functions by phase, i.e. asset discovery, content discovery, network discovery, vulnerability discovery
 # [] github, pastebin
 # [] brute force URL paths
-# [] save header respones
+# [] save header respones (aquatone saves header responses in the header dir)
 # [] install mullvad, use wireguard
 # [] use nahamsec rootdomains script?
 # [] database to store data
