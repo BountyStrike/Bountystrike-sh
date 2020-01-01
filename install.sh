@@ -309,6 +309,13 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+# TODO
+# https://github.com/fuzzdb-project/fuzzdb
+# https://github.com/berzerk0/Probable-Wordlists
+# https://github.com/s0md3v/Corsy
+# https://github.com/Bo0oM/fuzz.txt
+# Make sure to create amass configuration file
+
 if ! testcmd nmap; then
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${NORMAL}"
