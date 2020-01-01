@@ -43,22 +43,14 @@ domainExtract() {
     done < alive-js-files.txt
 }
 
-# https://github.com/nahamsec/crtndstry/blob/master/crtndstry.sh
 certdata(){
 	#give it patterns to look for within crt.sh for example %api%.site.com
 	declare -a arr=("api" "corp" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
 	for i in "${arr[@]}"
 	do
 		#get a list of domains based on our patterns in the array
-		crtsh=$(curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee -a rawdata/$1-crtsh.txt )
+		curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | sed 's/ /\n/g'
 	done
-		#get a list of domains from certspotter
-		certspotter=$(curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep -w $1\$ | tee $1-certspotter.txt)
-		#get a list of domains from digicert
-		digicert=$(curl -s https://ssltools.digicert.com/chainTester/webservice/ctsearch/search?keyword=$1 -o $1-digicert.json) 
-		#echo "$crtsh"
-		#echo "$certspotter"
-		#echo "$digicert"
 }
 
 certspotter(){ 
@@ -69,7 +61,8 @@ curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' 
 subdomainDiscovery() {
     runBanner "Subdomain Discovery with amass, subfinder and gobuster"
     # Passively find subdomains
-    amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
+    # Kill amass after 120 seconds incase it hangs for some reason
+    timeout 120s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
     subfinder -d $TARGET > subfinder-$DOMAINS_FILE &
     #gobuster dns -d $TARGET -w /opt/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE 
     echo "[!] Waiting for amass and subfinder to finish..."
@@ -93,6 +86,10 @@ subdomainDiscovery() {
 
     runBanner "Certspotter"
     certspotter $TARGET > certspotter.txt
+
+    runBanner "Cert.sh"
+    certdata $TARGET >> $FINAL_DOMAINS
+    sort -u $FINAL_DOMAINS -o $FINAL_DOMAINS
 
     #Rapid7 FDNS here
     
