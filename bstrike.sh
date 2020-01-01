@@ -190,7 +190,6 @@ echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 # [] github, pastebin
 # [] brute force URL paths
 # [] save header respones (aquatone saves header responses in the header dir)
-# [] CLRF
 # [] DoS checker (easily done by adding new header -> see https://portswigger.net/research/responsible-denial-of-service-with-web-cache-poisoning)
 # [] install mullvad, use wireguard
 # [] use nahamsec rootdomains script?
