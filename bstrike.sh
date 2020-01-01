@@ -9,6 +9,7 @@ VERSION="1.0"
 
 PROJECT=$1
 TARGET=$2
+GITHUB_REPO=$3
 
 NOW=$(date +'%Y-%m-%d_%H-%M-%S')
 
@@ -51,7 +52,7 @@ domainExtract() {
 }
 
 # https://github.com/nahamsec/crtndstry/blob/master/crtndstry.sh
-certdata(){
+certdata() {
 	#give it patterns to look for within crt.sh for example %api%.site.com
 	declare -a arr=("api" "corp" "productioncontroller" "nonprod" "nonprod2" "jira" "lab" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
 	for i in "${arr[@]}"
@@ -59,13 +60,8 @@ certdata(){
 		#get a list of domains based on our patterns in the array
 		crtsh=$(curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | tee -a rawdata/$1-crtsh.txt )
 	done
-		#get a list of domains from certspotter
-		certspotter=$(curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep -w $1\$ | tee rawdata/$1-certspotter.txt)
 		#get a list of domains from digicert
 		digicert=$(curl -s https://ssltools.digicert.com/chainTester/webservice/ctsearch/search?keyword=$1 -o rawdata/$1-digicert.json) 
-		#echo "$crtsh"
-		#echo "$certspotter"
-		#echo "$digicert"
 }
 
 certspotter(){ 
@@ -106,6 +102,12 @@ subdomainDiscovery() {
     #runbanner "Brute forcing with commonspeak2 wordlist"
     #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
+}
+
+
+repoCheck(){
+runBanner "RepoCheck for sensitive information"
+gittyleaks -d --find-anything -b -link $3 > sensitive_repo_information.txt
 }
 
 contentDiscovery(){
@@ -176,11 +178,21 @@ vulnerabilityDiscovery(){
 
 # Run pipeline
 # ==============================
-subdomainDiscovery
-contentDiscovery
-networkDiscovery
-vulnerabilityDiscovery
-visualDiscovery
+if [-z "$3" ]
+  then
+	subdomainDiscovery
+	contentDiscovery
+	networkDiscovery
+	vulnerabilityDiscovery
+	visualDiscovery
+	repoCheck
+else
+	subdomainDiscovery
+	contentDiscovery
+	networkDiscovery
+	vulnerabilityDiscovery
+	visualDiscovery
+fi
 
 echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 

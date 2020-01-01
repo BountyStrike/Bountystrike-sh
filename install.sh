@@ -227,6 +227,13 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsgen...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if ! testcmd gittyleaks;then
+     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gittyleaks...${NORMAL}"
+     python3.7 -m pip install gittyleaks --user
+else 
+   echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gittyleaks...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"	
+fi
+
 if ! testcmd trufflehog; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${NORMAL}"
     python3.7 -m pip install truffleHog --user
