@@ -314,6 +314,7 @@ fi
 # https://github.com/berzerk0/Probable-Wordlists
 # https://github.com/s0md3v/Corsy
 # https://github.com/Bo0oM/fuzz.txt
+# https://github.com/EnableSecurity/wafw00f
 # Make sure to create amass configuration file
 
 if ! testcmd nmap; then

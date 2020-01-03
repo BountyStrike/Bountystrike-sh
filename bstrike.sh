@@ -163,7 +163,7 @@ vulnerabilityDiscovery(){
 
     # open redirerct scanner here
 
-    # github/gist search
+    # github/gist search - https://github.com/gwen001/github-search/blob/master/github-endpoints.py?
 
     # RetireJS here
 }
