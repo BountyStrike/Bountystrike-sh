@@ -59,40 +59,52 @@ curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' 
 subdomainDiscovery() {
     runBanner "Subdomain Discovery with amass, subfinder and gobuster"
     # Passively find subdomains
-    # Kill amass after 5 minutes incase it hangs for some reason
+    # Kill amass after 120 seconds incase it hangs for some reason
     timeout 300s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
     subfinder -d $TARGET > subfinder-$DOMAINS_FILE &
-    #gobuster dns -d $TARGET -w /opt/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE 
+    #gobuster dns -d $TARGET -w /opt/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE
     echo "[!] Waiting for amass and subfinder to finish..."
     wait
 
     cat subfinder-$DOMAINS_FILE >> $DOMAINS_FILE
     #cat gobuster-$DOMAINS_FILE >> $DOMAINS_FILE
 
-    # Create Master domains file
-    sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
-
-    # dnsgen
-    runBanner "dnsgen"
-    dnsgen $FINAL_DOMAINS > dnsgen-domains.txt
-    cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> $FINAL_DOMAINS
-    sort -u $FINAL_DOMAINS -o $FINAL_DOMAINS
+    # Remove files
+    rm subfinder-$DOMAINS_FILE
+    #rm gobuster-$DOMAINS_FILE
 
     # Find HTTP servers from domains
     runBanner "Httprobe"
-    cat $FINAL_DOMAINS | httprobe > alive.txt
+    cat $DOMAINS_FILE | httprobe > alive.txt
 
     runBanner "Certspotter"
     certspotter $TARGET > certspotter.txt
 
     runBanner "Cert.sh"
-    certdata $TARGET >> $FINAL_DOMAINS
-    sort -u $FINAL_DOMAINS -o $FINAL_DOMAINS
+    certdata $TARGET >> $DOMAINS_FILE
 
     #Rapid7 FDNS here
-    
+
     #runbanner "Brute forcing with commonspeak2 wordlist"
     #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
+
+    # dnsgen
+    runBanner "dnsgen"
+    dnsgen $DOMAINS_FILE > dnsgen-domains.txt
+    cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved.txt
+    # Sometimes resolvers respond with fake dns records, lets filter them out
+    cat dnsgen-resolved.txt | filter-resolved >> $DOMAINS_FILE
+
+    sort -u $DOMAINS_FILE -o $DOMAINS_FILE
+
+    if [ -s $FINAL_DOMAINS ]
+    then
+        comm -23 $DOMAINS_FILE $FINAL_DOMAINS > new-domains-$NOW.txt
+        sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
+    else
+        # Create Master domains file
+        sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
+    fi
 
 }
 
@@ -291,15 +303,3 @@ fi
 
 echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 
-## Stuff to fix
-# [x] create functions
-# [x] order functions by phase, i.e. asset discovery, content discovery, network discovery, vulnerability discovery
-# [] github, gist
-# [] brute force URL paths
-# [] save header respones (aquatone saves header responses in the header dir)
-# [] DoS checker (easily done by adding new header -> see https://portswigger.net/research/responsible-denial-of-service-with-web-cache-poisoning)
-# [] install mullvad, use wireguard
-# [] database to store data
-# [] notification for new domains and diffs 
-# [] check for vulnerable javascript files
-# [] call api endpoint on found vuln --> notify via telegram
