@@ -22,8 +22,6 @@ RESET="\033[0m"
 DOMAINS_FILE="domains-$NOW.txt"
 FINAL_DOMAINS="final-domains.txt"
 
-touch $DOMAINS_FILE
-
 runBanner(){
     name=$1
     echo -e "${GREEN}\n[+] Running $name...${RESET}"
@@ -61,8 +59,8 @@ curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' 
 subdomainDiscovery() {
     runBanner "Subdomain Discovery with amass, subfinder and gobuster"
     # Passively find subdomains
-    # Kill amass after 120 seconds incase it hangs for some reason
-    timeout 120s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
+    # Kill amass after 5 minutes incase it hangs for some reason
+    timeout 300s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
     subfinder -d $TARGET > subfinder-$DOMAINS_FILE &
     #gobuster dns -d $TARGET -w /opt/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE 
     echo "[!] Waiting for amass and subfinder to finish..."
