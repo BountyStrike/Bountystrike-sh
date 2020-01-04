@@ -73,10 +73,6 @@ subdomainDiscovery() {
     rm subfinder-$DOMAINS_FILE
     #rm gobuster-$DOMAINS_FILE
 
-    # Find HTTP servers from domains
-    runBanner "Httprobe"
-    cat $DOMAINS_FILE | httprobe > alive.txt
-
     runBanner "Certspotter"
     certspotter $TARGET > certspotter.txt
 
@@ -88,7 +84,6 @@ subdomainDiscovery() {
     #runbanner "Brute forcing with commonspeak2 wordlist"
     #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
-    # dnsgen
     runBanner "dnsgen"
     dnsgen $DOMAINS_FILE > dnsgen-domains.txt
     cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved.txt
@@ -106,6 +101,10 @@ subdomainDiscovery() {
         sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
     fi
 
+    # Find HTTP servers from domains
+    runBanner "Httprobe"
+    cat $FINAL_DOMAINS | httprobe > alive.txt
+
 }
 
 contentDiscovery(){
@@ -118,11 +117,6 @@ contentDiscovery(){
     sort -u $FINAL_DOMAINS -o $FINAL_DOMAINS
 
     # Check URLs, 404 to external domains may be vulnarble to subdomain takeover
-    # URLs with 200 may contain juicy stuff
-    # maybe a second crawler would be good, to crawl the site now and specifically look for broken links to subdomain takeover services.
-    # run against alive.txt to get all HTTP codes?
-    runBanner "fff"
-    cat alive.txt | fff -S -o htmlstorage
 
     runBanner "GetJS"
     cat alive.txt | getJS -complete -output alive-js-files.txt
