@@ -43,7 +43,7 @@ domainExtract() {
 
 certdata(){
 	#give it patterns to look for within crt.sh for example %api%.site.com
-	declare -a arr=("api" "corp" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
+	declare -a arr=("api" "corp" "productioncontroller" "nonprod" "nonprod2" "jira" "lab" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
 	for i in "${arr[@]}"
 	do
 		#get a list of domains based on our patterns in the array
@@ -297,6 +297,7 @@ echo -e "${GREEN}\n==== BountyStrike surface scan complete ====${RESET}"
 # [] github, gist
 # [] brute force URL paths
 # [] save header respones (aquatone saves header responses in the header dir)
+# [] DoS checker (easily done by adding new header -> see https://portswigger.net/research/responsible-denial-of-service-with-web-cache-poisoning)
 # [] install mullvad, use wireguard
 # [] database to store data
 # [] notification for new domains and diffs 
