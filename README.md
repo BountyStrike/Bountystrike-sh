@@ -5,6 +5,34 @@
 
 Bountystrike-sh is opensource but belongs to the BountyStrike project, self-hosted bug bounty management system.
 
+```
+  ____   ____  _    _ _   _ _________     _______ _______ _____  _____ _  ________
+ |  _ \ / __ \| |  | | \ | |__   __\ \   / / ____|__   __|  __ \|_   _| |/ /  ____|
+ | |_) | |  | | |  | |  \| |  | |   \ \_/ / (___    | |  | |__) | | | | ' /| |__
+ |  _ <| |  | | |  | | . ` |  | |    \   / \___ \   | |  |  _  /  | | |  < |  __|
+ | |_) | |__| | |__| | |\  |  | |     | |  ____) |  | |  | | \ \ _| |_| . \| |____
+ |____/ \____/ \____/|_| \_|  |_|     |_| |_____/   |_|  |_|  \_\_____|_|\_\______|
+
+________________________________ WHAT THE SHELL?__________________________________
+
+== Info
+ Bountystrike-sh is a simple bash pipeline script
+ containing a bunch tools piping data between each other.
+ No need for any fancy setup ^_^
+
+ Stiched together by @dubs3c.
+
+== Usage:
+        bstrike.sh <action> [project] [domain]
+            bstrike.sh install                       (Install tooling)
+            bstrike.sh run fra fra.se                (Run pipeline)
+            bstrike.sh [assetdiscovery|ad]   fra.se  (Run only asset discovery)
+            bstrike.sh [contentdiscovery|cd] fra.se  (Run only content discovery)
+            bstrike.sh [networkdiscovery|nd] fra.se  (Run only network discovery)
+            bstrike.sh [visualdiscovery|vd]  fra.se  (Run only visual discovery)
+            bstrike.sh [vulndiscovery|vvd]   fra.se  (Run only vulnerability discovery)
+```
+
 ## Tools
 
 The following tools and worldlists will be installed:
