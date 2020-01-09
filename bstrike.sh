@@ -84,17 +84,28 @@ subdomainDiscovery() {
     #runbanner "Brute forcing with commonspeak2 wordlist"
     #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
-    runBanner "dnsgen"
-    dnsgen $DOMAINS_FILE > dnsgen-domains.txt
-    cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved.txt
-    # Sometimes resolvers respond with fake dns records, lets filter them out
-    cat dnsgen-resolved.txt | filter-resolved >> $DOMAINS_FILE
+    # run dnsgen only on new domains, skip if file exists.
+    if [ ! -s dnsgen-domains.txt ]
+    then
+        runBanner "dnsgen"
+        dnsgen $DOMAINS_FILE > dnsgen-domains.txt
+        cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev | tee -a dnsgen-resolved.txt
+        # Sometimes resolvers respond with fake dns records, lets filter them out
+        cat dnsgen-resolved.txt | filter-resolved >> $DOMAINS_FILE
+    else
+        echo -e "${RED}[!] Skipping dnsgen since the file has already been generated.${RESET}"
+    fi
 
     sort -u $DOMAINS_FILE -o $DOMAINS_FILE
 
     if [ -s $FINAL_DOMAINS ]
     then
         comm -23 $DOMAINS_FILE $FINAL_DOMAINS > new-domains-$NOW.txt
+        runBanner "dnsgen on new domains"
+        dnsgen new-domains-$NOW.txt > dnsgen-new-domains-$NOW.txt
+        runBanner "massdns on new generated domains"
+        cat dnsgen-new-domains-$NOW.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved-new-domains-$NOW.txt
+        cat dnsgen-resolved-new-domains-$NOW.txt| filter-resolved >> $DOMAINS_FILE
         sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
     else
         # Create Master domains file
@@ -103,7 +114,7 @@ subdomainDiscovery() {
 
     # Find HTTP servers from domains
     runBanner "Httprobe"
-    cat $FINAL_DOMAINS | httprobe > alive.txt
+    cat $FINAL_DOMAINS | httprobe > alive-$NOW.txt
 
 }
 
@@ -161,7 +172,7 @@ visualDiscovery(){
 
 vulnerabilityDiscovery(){
     runBanner "Subdomain takeover checks"
-    subzy -targets $FINAL_DOMAINS | tee -a subtakeovers-$NOW.txt
+    subzy -targets $FINAL_DOMAINS | grep -i -v -E "not vulnerable|ERROR" | tee -a subtakeovers-$NOW.txt
 
     # CRLF scanner here
 
