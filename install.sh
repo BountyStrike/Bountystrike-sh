@@ -316,6 +316,8 @@ fi
 # https://github.com/Bo0oM/fuzz.txt
 # https://github.com/EnableSecurity/wafw00f
 # Make sure to create amass configuration file
+# https://github.com/tomnomnom/hacks/tree/master/unisub
+# https://github.com/maurosoria/dirsearch
 
 if ! testcmd nmap; then
 

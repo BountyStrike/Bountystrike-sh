@@ -114,7 +114,7 @@ subdomainDiscovery() {
 
     # Find HTTP servers from domains
     runBanner "Httprobe"
-    cat $FINAL_DOMAINS | httprobe > alive-$NOW.txt
+    cat $FINAL_DOMAINS | httprobe > alive.txt
 
 }
 
@@ -131,6 +131,7 @@ contentDiscovery(){
 
     runBanner "GetJS"
     cat alive.txt | getJS -complete -output alive-js-files.txt
+    sort -u alive-js-files.txt -o alive-js-files.txt
 
     runBanner "Extracting paths from js files"
     domainExtract
