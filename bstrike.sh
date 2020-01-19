@@ -47,6 +47,8 @@ certdata(){
 	for i in "${arr[@]}"
 	do
 		#get a list of domains based on our patterns in the array
+        # shit doesn't work anymore, seems like "%" has been disabled.
+        # TODO: Fix or remove
 		curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | sed 's/ /\n/g'
 	done
 }
@@ -75,9 +77,6 @@ subdomainDiscovery() {
 
     runBanner "Certspotter"
     certspotter $TARGET > certspotter.txt
-
-    runBanner "Cert.sh"
-    certdata $TARGET >> $DOMAINS_FILE
 
     #Rapid7 FDNS here
 
