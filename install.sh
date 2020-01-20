@@ -2,11 +2,13 @@
 
 STARTIME=$(date +%s)
 LOGFILE="install.log"
+TOOLS_DIR="$HOME/tools"
 #https://misc.flogisoft.com/bash/tip_colors_and_formatting
 BLINK='\e[5m'
 BOLD='\e[1m'
 LIGHT_GREEN='\e[92m'
 LIGHT_YELLOW='\e[93m'
+LIGHT_CYAN='\e[96m'
 NORMAL='\e[0m'
 RED='\e[31m'
 UNDERLINE='\e[4m'
@@ -44,16 +46,70 @@ installPython(){
     make -j 1
     sudo make altinstall
     cd ..
-    rm -rf Python-$PYTHON_VERSION
+    sudo rm -rf Python-$PYTHON_VERSION
 }
 
+installRuby(){
+    sudo apt-add-repository -y ppa:rael-gc/rvm
+    sudo apt-get update
+    sudo apt-get install rvm -y
+    echo 'source "/etc/profile.d/rvm.sh"' >> ~/.profile
+    rvmsudo install ruby-2.6.3
+    rvm use ruby-2.6.3
+}
 
+echo -e "${BOLD}${LIGHT_CYAN}\n[~] Bountystrike environment installation${NORMAL}"
 echo -e "${BOLD}[~] Installing bug bounty tools...${NORMAL}"
 echo -e "=========================================\n"
+
+echo "                                              "
+echo "                                        .--::///+  _______________________________________________"
+echo "                                  -+sydmmmNNNNNNN |                                               |"
+echo "                              ./ymmNNNNNNNNNNNNNN |                                               |"
+echo "                            -ymmNNNNNNNNNNNNNNNNN |  It is a shame that your report was a         |"
+echo "                           ommmmNNNNNNNNNNNNNNNNN |  duplicate, but bug bounty hunting is         |"
+echo "                         .ydmNNNNNNNNNNNNNNNNNNNN |  a complicated profession.                    |"
+echo "                         odmmNNNNNNNNNNNNNNNNNNNN |                                               |"
+echo "                        /hmmmNNNNNNNNNNNNNNNNMNNN |  They said you were coming, they said you     |"
+echo "                        +hmmmNNNNNNNNNNNNNNNNNMMN |  were on all platforms, would you agree?      |"
+echo "                       ..ymmmNNNNNNNNNNNNNNNNNNNN |                                               |"
+echo "                       :.+so+//:---.......----::- |  Bounty Hunter, the platforms are waiting     |"
+echo "                       .         ....----:///++++ |  for you.                                     |"
+echo "                       .-/osy+////:::---...-dNNNN |                                               |"
+echo "                     :sdyyydy             :mNNNNM |  - Yea? Good.                                 |"
+echo "                    -hmmdhdmm:         .+hNNNNNNM |                                               |"
+echo "                   .odNNmdmmNNo    .:+yNNNNNNNNNN |                                               |"
+echo -e "                   -hNNNmNo::mNNNNNNNNNNNNNNNNNNN |             ${LIGHT_GREEN}-+- ${LIGHT_YELLOW}BOUNTYSTRIKE ${LIGHT_GREEN}-+-${NORMAL}              |"
+echo "                   -hNNmdNo--/dNNNNNNNNNNNNNNNNNN |                                               |"
+echo "                   :dNmmdmd-:+NNNNNNNNNNNNNNNNNNm |  This script will install a bug bounty        |"
+echo "                  /hNNmmddmd+mNNNNNNNNNNNNNNds++o |  hunting environment containing tools and     |"
+echo "                /dNNNNNmmmmmmmNNNNNNNNNNNmdoosydd |  tradecraft by bounty hunters, for bounty     |"
+echo "               sNNNNdyydNNNNmmmmmmNNNNNmyoymNNNNN |  hunters.                                     |"
+echo "              :NNmmmdso++dNNNNmmNNNNNdhymNNNNNNNN |                                               |"
+echo "              -NmdmmNNdsyohNNNNmmNNNNNNNNNNNNNNNN |  @dubs3c                                      |"
+echo "               sdhmmNNNNdyhdNNNNNNNNNNNNNNNNNNNNN |                                               |"
+echo "                /yhmNNmmNNNNNNNNNNNNNNNNNNNNNNmhh |                                               |"
+echo "                  +yhmmNNNNNNNNNNNNNNNNNNNNNNmh+: |_______________________________________________|"
+echo "                    ./dmmmmNNNNNNNNNNNNNNNNmmd."
+echo "                      ommmmmNNNNNNNmNmNNNNmmd:"
+echo "                      :dmmmmNNNNNmh../oyhhhy:"
+echo "                       sdmmmmNNNmmh/++-.+oh."
+echo "                        /dmmmmmmmmdo-:/ossd:"
+echo "                          /ohhdmmmmmmdddddmh/"
+echo "                             -/osyhdddddhyo:"
+echo "                                   .----. "
+
+sleep 5
+
+# Create a tools directory 3d-party tools are stored
+mkdir -p $TOOLS_DIR
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Updating system...${NORMAL}"
 sudo apt-get update
 sudo apt-get upgrade -y
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux chromium-browser software-properties-common chromium-chromedriver...${NORMAL}"
+sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver >> $LOGFILE 2>&1
 
 if ! testcmd docker; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Docker-CE...${NORMAL}"
@@ -69,8 +125,19 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Python-3.7.6...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver...${NORMAL}"
-sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver >> $LOGFILE 2>&1
+if ! testcmd /usr/share/rvm/bin/rvm; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${NORMAL}"
+    installRuby
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if ! testcmd npm; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${NORMAL}"
+    bash nodejs.sh
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
 
 if [ ! -x /usr/local/go/bin/go ]; then
 
@@ -80,9 +147,9 @@ if [ ! -x /usr/local/go/bin/go ]; then
     rm -rf golang-13.5.tar.gz
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Adding Go to PATH...${NORMAL}"
-    echo "export GOPATH=$HOME/go" >> $HOME/.profile
-    echo "export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH" >> $HOME/.profile
-    source $HOME/.profile
+    echo "export GOPATH=$HOME/go" >> "$HOME/.profile"
+    echo "export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH" >> "$HOME/.profile"
+    source "$HOME/.profile"
     echo "[!] Done, run \"source $HOME/.profile\" when install is done."
 
 fi
@@ -250,17 +317,32 @@ fi
 
 
 echo -e "\n-----------------------------------------"
+echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing ruby tools${NORMAL}"
+echo "-----------------------------------------"
+
+if [ ! -d "$TOOLS_DIR/WhatWeb" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${NORMAL}"
+    git clone https://github.com/urbanadventurer/WhatWeb.git $TOOLS_DIR/WhatWeb
+    cd $TOOLS_DIR/WhatWeb
+    rvmsudo bundle install # meh
+    cd
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+
+echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing misc tools${NORMAL}"
 echo "-----------------------------------------"
 
-if [ ! -f "/opt/chromedriver" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to /opt/...${NORMAL}"
+if [ ! -f "$TOOLS_DIR/chromedriver" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${NORMAL}"
     wget https://chromedriver.storage.googleapis.com/78.0.3904.105/chromedriver_linux64.zip -O chromedriver.zip
     unzip chromedriver.zip
-    sudo mv chromedriver /opt/
+    sudo mv chromedriver $TOOLS_DIR
     rm -rf chromedriver.zip
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 
@@ -288,25 +370,25 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing masscan...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -d "/opt/seclists" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${NORMAL}"
-    sudo git clone https://github.com/danielmiessler/SecLists.git /opt/seclists
+if [ ! -d "$TOOLS_DIR/seclists" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${NORMAL}"
+    sudo git clone https://github.com/danielmiessler/SecLists.git $TOOLS_DIR/seclists
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -f "/opt/wordlists/commonspeak2-subdomains.txt" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${NORMAL}"
-    sudo git clone https://github.com/assetnote/commonspeak2-wordlists /opt/wordlists/commonspeak2
+if [ ! -d "$TOOLS_DIR/wordlists/commonspeak2" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to $TOOLS_DIR...${NORMAL}"
+    sudo git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -d "/opt/wordlists/api_wordlist" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${NORMAL}"
-    sudo git clone https://github.com/chrislockard/api_wordlist /opt/wordlists/api_wordlists
+if [ ! -d "$TOOLS_DIR/wordlists/api_wordlists" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${NORMAL}"
+    sudo git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 # TODO
@@ -324,19 +406,20 @@ if ! testcmd nmap; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${NORMAL}"
     git clone https://github.com/nmap/nmap.git
     cd nmap
-    echo "[!] Configuring nmap..."
-    sh ./configure >> $LOGFILE 2>&1
-    echo "[!] Running make nmap..."
-    make >> $LOGFILE 2>&1
-    echo "[!] Runing make install nmap..."
-    make install >> $LOGFILE 2>&1
+    echo -e "${LIGHT_CYAN}[!] Configuring nmap...${NORMAL}"
+    sh ./configure
+    echo -e "${LIGHT_CYAN}[!] Running make nmap...${NORMAL}"
+    make
+    echo -e "${LIGHT_CYAN}[!] Runing make install nmap...${NORMAL}"
+    sudo make install
     cd ..
     rm -rf nmap
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+echo -e "${LIGHT_CYAN}\n[+] Looks like we are done? You may need to run source ~/.profile in order for some programs to take effect${NORMAL}"
 
 echo -e "\n========================================="
-echo -e "${BOLD}~ BountyStrike-sh installation complete ~${NORMAL}"
-echo -e "${BOLD}~ Enjoy your bounties :) ~${NORMAL}\n"
+echo -e "${BOLD}${LIGHT_YELLOW}~ BountyStrike-sh installation complete ~${NORMAL}"
+echo -e "${BOLD}${LIGHT_GREEN}~ Enjoy your bounties ~${NORMAL}\n"
