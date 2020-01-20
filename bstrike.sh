@@ -11,6 +11,7 @@ PROJECT=""
 TARGET=""
 
 NOW=$(date +'%Y-%m-%d_%H-%M-%S')
+TOOLS_DIR="$HOME/tools"
 
 RED="\033[1;31m"
 GREEN="\033[1;32m"
@@ -64,7 +65,7 @@ subdomainDiscovery() {
     # Kill amass after 120 seconds incase it hangs for some reason
     timeout 300s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
     subfinder -d $TARGET > subfinder-$DOMAINS_FILE &
-    #gobuster dns -d $TARGET -w /opt/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE
+    #gobuster dns -d $TARGET -w $TOOLS_DIR/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE
     echo "[!] Waiting for amass and subfinder to finish..."
     wait
 
@@ -81,14 +82,14 @@ subdomainDiscovery() {
     #Rapid7 FDNS here
 
     #runbanner "Brute forcing with commonspeak2 wordlist"
-    #gobuster dns -d $TARGET -w /opt/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
+    #gobuster dns -d $TARGET -w $TOOLS_DIR/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
     # run dnsgen only on new domains, skip if file exists.
     if [ ! -s dnsgen-domains.txt ]
     then
         runBanner "dnsgen"
         dnsgen $DOMAINS_FILE > dnsgen-domains.txt
-        cat dnsgen-domains.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev | tee -a dnsgen-resolved.txt
+        cat dnsgen-domains.txt | massdns --output S -q -r $TOOLS_DIR/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev | tee -a dnsgen-resolved.txt
         # Sometimes resolvers respond with fake dns records, lets filter them out
         cat dnsgen-resolved.txt | filter-resolved >> $DOMAINS_FILE
     else
@@ -103,7 +104,7 @@ subdomainDiscovery() {
         runBanner "dnsgen on new domains"
         dnsgen new-domains-$NOW.txt > dnsgen-new-domains-$NOW.txt
         runBanner "massdns on new generated domains"
-        cat dnsgen-new-domains-$NOW.txt | massdns --output S -q -r /opt/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved-new-domains-$NOW.txt
+        cat dnsgen-new-domains-$NOW.txt | massdns --output S -q -r $TOOLS_DIR/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved-new-domains-$NOW.txt
         cat dnsgen-resolved-new-domains-$NOW.txt| filter-resolved >> $DOMAINS_FILE
         sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
     else
@@ -147,7 +148,7 @@ networkDiscovery(){
 
     # Find IP-addresses
     runBanner "Massdns"
-    cat $FINAL_DOMAINS | massdns --output S -q -r /opt/resolvers.txt > massdns-$NOW.txt
+    cat $FINAL_DOMAINS | massdns --output S -q -r $TOOLS_DIR/resolvers.txt > massdns-$NOW.txt
     cat massdns-$NOW.txt | grep -w -E A | cut -d " " -f3 > ips-$NOW.txt
 
     if [ -s ips-$NOW.txt ]

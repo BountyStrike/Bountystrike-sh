@@ -352,6 +352,7 @@ if ! testcmd massdns; then
     cd massdns
     make >> $LOGFILE 2>&1
     sudo mv bin/massdns /usr/local/bin
+    cp lists/resolvers.txt $TOOLS_DIR/resolvers.txt
     cd ..
     rm -rf massdns
 else
