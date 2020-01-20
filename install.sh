@@ -164,6 +164,13 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unfurl...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if ! testcmd filter-resolved; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${NORMAL}"
+    go get -u github.com/tomnomnom/hacks/filter-resolved
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
 if ! testcmd gowitness; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gowitness...${NORMAL}"
     go get -u github.com/sensepost/gowitness
@@ -295,14 +302,14 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -f "/opt/wordlists/commonspeak2-subdomains.txt" ]; then
+if [ ! -f "/opt/wordlists/commonspeak2/subdomains/subdomains.txt" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${NORMAL}"
     sudo git clone https://github.com/assetnote/commonspeak2-wordlists /opt/wordlists/commonspeak2
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to /opt/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -d "/opt/wordlists/api_wordlist" ]; then
+if [ ! -d "/opt/wordlists/api_wordlists" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to /opt/...${NORMAL}"
     sudo git clone https://github.com/chrislockard/api_wordlist /opt/wordlists/api_wordlists
 else
