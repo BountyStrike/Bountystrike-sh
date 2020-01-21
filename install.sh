@@ -58,6 +58,13 @@ installRuby(){
     rvm use ruby-2.6.3
 }
 
+installMullvadVPN(){
+    MULLVADVPN_VERSION="2019.10_amd64"
+    wget "https://mullvad.net/media/app/MullvadVPN-$MULLVADVPN_VERSION.deb"
+    sudo dpkg -i "MullvadVPN-$MULLVADVPN_VERSION.deb"
+    rm "MullvadVPN-$MULLVADVPN_VERSION.deb"
+}
+
 echo -e "${BOLD}${LIGHT_CYAN}\n[~] Bountystrike environment installation${NORMAL}"
 echo -e "${BOLD}[~] Installing bug bounty tools...${NORMAL}"
 echo -e "=========================================\n"
@@ -137,6 +144,13 @@ if ! testcmd npm; then
     bash nodejs.sh
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if ! testcmd mullvad; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing MullvadVPN...${NORMAL}"
+    installMullvadVPN
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing MullvadVPN...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if [ ! -x /usr/local/go/bin/go ]; then

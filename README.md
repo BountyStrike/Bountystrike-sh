@@ -72,6 +72,7 @@ The following tools and worldlists will be installed:
 * [bass](https://github.com/Abss0x7tbh/bass)
 * [dirsearch](https://github.com/maurosoria/dirsearch)
 * [unisub](https://github.com/tomnomnom/hacks/tree/master/unisub)
+* [MullvadVPN](https://mullvad.net/)
 
 Other stuff that will be installed as well:
 * Python 3.7.6
@@ -81,7 +82,7 @@ Other stuff that will be installed as well:
 * Ruby
 
 ## Install
-Just run `bash install.sh` to get the bug hunting environment. So far only tested for Ubuntu 18.01.
+Just run `bash install.sh` to get the bug hunting environment. So far only tested for Ubuntu 16.04.6 and 18.04.3 LTS.
 
 ### Vagrant
 You also the have the option to use vagrant with virtualbox, just runt `vagrant up && vagrant ssh`. Create a folder called `data` in the root directory, vagrant will map it to `/vagrant_data` inside the VM.
