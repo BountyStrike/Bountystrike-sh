@@ -231,6 +231,13 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unfurl...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if ! testcmd filter-resolved; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${NORMAL}"
+    go get -u github.com/tomnomnom/hacks/filter-resolved
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
 if ! testcmd gowitness; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gowitness...${NORMAL}"
     go get -u github.com/sensepost/gowitness
@@ -379,10 +386,10 @@ else
 fi
 
 if [ ! -d "$TOOLS_DIR/wordlists/commonspeak2" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to $TOOLS_DIR...${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR...${NORMAL}"
     sudo git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlsits to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if [ ! -d "$TOOLS_DIR/wordlists/api_wordlists" ]; then

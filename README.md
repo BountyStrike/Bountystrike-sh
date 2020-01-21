@@ -45,20 +45,23 @@ The following tools and worldlists will be installed:
 * [Waybackurls](http://github.com/tomnomnom/waybackurls)
 * [WaybackUnifier](https://github.com/mhmdiaa/waybackunifier)
 * [httprobe](github.com/tomnomnom/httprobe)
-* meg
-* unfurl
-* gowitness
-* GetJS
-* Subzy
-* SubOver
-* Aquatone
-* gitrob
-* dnsgen
-* truffleHog
-* massdns
-* masscan
-* nmap
-* SecLists
+* [meg](https://github.com/tomnomnom/meg)
+* [unfurl](https://github.com/tomnomnom/unfurl)
+* [filter-resolved](https://github.com/tomnomnom/hacks/tree/master/filter-resolved)
+* [gowitness](https://github.com/sensepost/gowitness)
+* [GetJS](https://github.com/003random/getJS)
+* [Subzy](https://github.com/lukasikic/subzy)
+* [SubOver](https://github.com/Ice3man543/SubOver)
+* [Aquatone](https://github.com/michenriksen/aquatone)
+* [gitrob](https://github.com/michenriksen/gitrob)
+* [dnsgen](https://github.com/ProjectAnte/dnsgen)
+* [truffleHog](https://github.com/dxa4481/truffleHog)
+* [massdns](https://github.com/blechschmidt/massdns)
+* [masscan](https://github.com/robertdavidgraham/masscan)
+* [nmap](https://github.com/nmap/nmap)
+* [SecLists](https://github.com/danielmiessler/SecLists)
+* [sshgit](https://github.com/eth0izzle/shhgit)
+* [api_wordlist](https://github.com/chrislockard/api_wordlist)
 
 Other stuff that will be installed as well:
 * Python 3.7.6
