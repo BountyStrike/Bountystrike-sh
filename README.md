@@ -62,6 +62,16 @@ The following tools and worldlists will be installed:
 * [SecLists](https://github.com/danielmiessler/SecLists)
 * [sshgit](https://github.com/eth0izzle/shhgit)
 * [api_wordlist](https://github.com/chrislockard/api_wordlist)
+* [wafw00f](https://github.com/EnableSecurity/wafw00f)
+* [fuzzdb](https://github.com/fuzzdb-project/fuzzdb)
+* [Probable-Wordlists](https://github.com/berzerk0/Probable-Wordlists)
+* [Bo0oM/fuzz.txt](https://github.com/Bo0oM/fuzz.txt)
+* [Corsy](https://github.com/s0md3v/Corsy)
+* [ffuf](https://github.com/ffuf/ffuf)
+* [flumberboozle](https://github.com/fellchase/flumberboozle)
+* [bass](https://github.com/Abss0x7tbh/bass)
+* [dirsearch](https://github.com/maurosoria/dirsearch)
+* [unisub](https://github.com/tomnomnom/hacks/tree/master/unisub)
 
 Other stuff that will be installed as well:
 * Python 3.7.6

@@ -280,6 +280,20 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gitrob...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if ! testcmd ffuf; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${NORMAL}"
+    go get github.com/ffuf/ffuf
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if ! testcmd unisub; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unisub...${NORMAL}"
+    go get -u github.com/tomnomnom/hacks/unisub
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unisub...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
 if ! testcmd aquatone; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing aquatone...${NORMAL}"
     AQUATONE="aquatone-1.7.0.zip"
@@ -322,6 +336,46 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if ! testcmd wafw00f; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${NORMAL}"
+    git clone https://github.com/EnableSecurity/wafw00f.git $TOOLS_DIR/wafw00f
+    cd $TOOLS_DIR/wafw00f
+    python3.7 setup.py install --user
+    cd
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/Corsy" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Corsy...${NORMAL}"
+    git clone https://github.com/s0md3v/Corsy $TOOLS_DIR/Corsy
+    cd "$TOOLS_DIR/Corsy"
+    pip3.7 install -r requirements.txt --user
+    cd
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Corsy...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/flumberboozle" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing flumberboozle...${NORMAL}"
+    git clone https://github.com/fellchase/flumberboozle $TOOLS_DIR/flumberboozle
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing flumberboozle...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/bass" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing bass...${NORMAL}"
+    git clone https://github.com/Abss0x7tbh/bass $TOOLS_DIR/bass
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing bass...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/dirsearch" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dirsearch...${NORMAL}"
+    git clone https://github.com/maurosoria/dirsearch.git $TOOLS_DIR/dirsearch
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dirsearch...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
 
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing ruby tools${NORMAL}"
@@ -380,34 +434,52 @@ fi
 
 if [ ! -d "$TOOLS_DIR/seclists" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${NORMAL}"
-    sudo git clone https://github.com/danielmiessler/SecLists.git $TOOLS_DIR/seclists
+    git clone https://github.com/danielmiessler/SecLists.git $TOOLS_DIR/seclists
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if [ ! -d "$TOOLS_DIR/wordlists/commonspeak2" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR...${NORMAL}"
-    sudo git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
+    git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if [ ! -d "$TOOLS_DIR/wordlists/api_wordlists" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${NORMAL}"
-    sudo git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
+    git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-# TODO
-# https://github.com/fuzzdb-project/fuzzdb
-# https://github.com/berzerk0/Probable-Wordlists
-# https://github.com/s0md3v/Corsy
-# https://github.com/Bo0oM/fuzz.txt
-# https://github.com/EnableSecurity/wafw00f
-# Make sure to create amass configuration file
-# https://github.com/tomnomnom/hacks/tree/master/unisub
-# https://github.com/maurosoria/dirsearch
+if [ ! -d "$TOOLS_DIR/wordlists/fuzz.txt" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${NORMAL}"
+    git clone https://github.com/Bo0oM/fuzz.txt.git $TOOLS_DIR/wordlists/fuzz.txt
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/wordlists/fuzz.txt" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${NORMAL}"
+    git clone https://github.com/Bo0oM/fuzz.txt.git $TOOLS_DIR/wordlists/fuzz.txt
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/wordlists/Probable-Wordlists" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Probable-Wordlists to $TOOLS_DIR/wordlists...${NORMAL}"
+    git clone https://github.com/berzerk0/Probable-Wordlists $TOOLS_DIR/wordlists/Probable-Wordlists
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Probable-Wordlists to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if [ ! -d "$TOOLS_DIR/wordlists/fuzzdb" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fuzzdb to $TOOLS_DIR/wordlists...${NORMAL}"
+    git clone https://github.com/fuzzdb-project/fuzzdb $TOOLS_DIR/wordlists/fuzzdb
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fuzzdb to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
 
 if ! testcmd nmap; then
 
