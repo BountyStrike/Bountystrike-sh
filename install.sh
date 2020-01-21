@@ -377,6 +377,16 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dirsearch...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
+if [ ! -d "$TOOLS_DIR/Injectus" ]; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Injectus...${NORMAL}"
+    git clone https://github.com/BountyStrike/Injectus $TOOLS_DIR/Injectus
+    cd $TOOLS_DIR/Injectus
+    pip3.7 install -r requirements.txt --user
+    cd
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Injectus...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing ruby tools${NORMAL}"
 echo "-----------------------------------------"
