@@ -50,12 +50,15 @@ installPython(){
 }
 
 installRuby(){
-    sudo apt-add-repository -y ppa:rael-gc/rvm
-    sudo apt-get update
-    sudo apt-get install rvm -y
-    echo 'source "/etc/profile.d/rvm.sh"' >> ~/.profile
-    rvmsudo install ruby-2.6.3
-    rvm use ruby-2.6.3
+    wget https://cache.ruby-lang.org/pub/ruby/2.7/ruby-2.7.0.tar.gz
+    gunzip -d ruby-2.7.0.tar.gz
+    tar -xvf ruby-2.7.0.tar
+    cd ruby-2.7.0/
+    ./configure
+    make
+    sudo make install
+    cd ..
+    rm -rf ruby-2.7.0
 }
 
 installMullvadVPN(){
@@ -132,7 +135,7 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Python-3.7.6...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if ! testcmd /usr/share/rvm/bin/rvm; then
+if ! testcmd ruby; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${NORMAL}"
     installRuby
 else
@@ -409,7 +412,7 @@ if [ ! -d "$TOOLS_DIR/WhatWeb" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${NORMAL}"
     git clone https://github.com/urbanadventurer/WhatWeb.git $TOOLS_DIR/WhatWeb
     cd $TOOLS_DIR/WhatWeb
-    rvmsudo bundle install # meh
+    bundle install
     cd
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
