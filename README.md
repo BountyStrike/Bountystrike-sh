@@ -99,3 +99,7 @@ Any feedback or ideas are welcome! Want to improve something? Create a pull requ
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :D
+
+## License
+
+Bountystrike-sh is made with ♥ by [@dubs3c](https://github.com/dubs3c) and is released under the GNU General Public License v3.0.
