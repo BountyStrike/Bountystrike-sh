@@ -24,7 +24,7 @@ echo "" > $LOGFILE
 
 installDocker() {
     sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim git python-pip build-essential libbz2-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev ntp
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim git python-pip python3-pip build-essential libbz2-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev ntp
     sudo systemctl enable ntp
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -62,7 +62,8 @@ installRuby(){
 }
 
 installMullvadVPN(){
-    MULLVADVPN_VERSION="2019.10_amd64"
+    # Should check system architecture before downloading this
+    MULLVADVPN_VERSION="2023.2_amd64"
     wget "https://mullvad.net/media/app/MullvadVPN-$MULLVADVPN_VERSION.deb"
     sudo dpkg -i "MullvadVPN-$MULLVADVPN_VERSION.deb"
     rm "MullvadVPN-$MULLVADVPN_VERSION.deb"
@@ -159,9 +160,9 @@ fi
 if [ ! -x /usr/local/go/bin/go ]; then
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing golang...${NORMAL}"
-    wget https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz -O golang-13.5.tar.gz
-    sudo tar -C /usr/local -xzf golang-13.5.tar.gz
-    rm -rf golang-13.5.tar.gz
+    wget https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -O go1.20.2.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.2.linux-amd64.tar.gz
+    rm -rf go1.20.2.linux-amd64.tar.gz
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Adding Go to PATH...${NORMAL}"
     echo "export GOPATH=$HOME/go" >> "$HOME/.profile"
@@ -182,176 +183,75 @@ echo "-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing go tools${NORMAL}"
 echo "-----------------------------------------"
 
-# Check if the tool exists in $PATH before installing it
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Nuclei...${NORMAL}"
+go install -u github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 
-if ! testcmd amass; then
-    export GO111MODULE=on
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing amass...${NORMAL}"
-    go get -u github.com/OWASP/Amass/v3/...
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing amass...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing puredns...${NORMAL}"
+go install github.com/d3mondev/puredns/v2@latest
 
-if ! testcmd subfinder; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing subfinder...${NORMAL}"
-    go get github.com/projectdiscovery/subfinder/cmd/subfinder
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing subfinder...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing httpx...${NORMAL}"
+go install github.com/projectdiscovery/httpx/cmd/httpx@latest
 
-if ! testcmd gobuster; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gobuster...${NORMAL}"
-    go get github.com/OJ/gobuster
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gobuster...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing amass...${NORMAL}"
+go install github.com/owasp-amass/amass/v3/...@master
 
-if ! testcmd waybackurls; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackurls...${NORMAL}"
-    go get -u github.com/tomnomnom/waybackurls
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackurls...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing subfinder...${NORMAL}"
+go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 
-if ! testcmd waybackunifier; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackunifier...${NORMAL}"
-    go get github.com/mhmdiaa/waybackunifier
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackunifier...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gobuster...${NORMAL}"
+go install github.com/OJ/gobuster/v3@latest
 
-if ! testcmd fff; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fff...${NORMAL}"
-    go get -u github.com/tomnomnom/hacks/fff
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fff...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackurls...${NORMAL}"
+go install github.com/tomnomnom/waybackurls@latest
 
-if ! testcmd httprobe; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing httprobe...${NORMAL}"
-    go get -u github.com/tomnomnom/httprobe
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing httprobe...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fff...${NORMAL}"
+go get github.com/tomnomnom/fff
 
-if ! testcmd meg; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing meg...${NORMAL}"
-    go get -u github.com/tomnomnom/meg
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing meg...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing meg...${NORMAL}"
+go install github.com/tomnomnom/meg@latest
 
-if ! testcmd unfurl; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unfurl...${NORMAL}"
-    go get -u github.com/tomnomnom/unfurl
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unfurl...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unfurl...${NORMAL}"
+go install github.com/tomnomnom/unfurl@latest
 
-if ! testcmd filter-resolved; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${NORMAL}"
-    go get -u github.com/tomnomnom/hacks/filter-resolved
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing filter-resolved...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gowitness...${NORMAL}"
+go install github.com/sensepost/gowitness@latest
 
-if ! testcmd gowitness; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gowitness...${NORMAL}"
-    go get -u github.com/sensepost/gowitness
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gowitness...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing GetJS...${NORMAL}"
+go install github.com/003random/getJS@latest
 
-if ! testcmd getJS; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing GetJS...${NORMAL}"
-    go get -u github.com/003random/getJS
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing GetJS...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Subzy...${NORMAL}"
+go install github.com/LukaSikic/subzy@latest
 
-if ! testcmd subzy; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Subzy...${NORMAL}"
-    go get -u github.com/lukasikic/subzy
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Subzy...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Shhgit...${NORMAL}"
+go install github.com/eth0izzle/shhgit@latest
 
-if ! testcmd SubOver; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SubOver...${NORMAL}"
-    go get -u github.com/Ice3man543/SubOver
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SubOver...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gitrob...${NORMAL}"
+go install github.com/michenriksen/gitrob@latest
 
-if ! testcmd shhgit; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Shhgit...${NORMAL}"
-    go get github.com/eth0izzle/shhgit
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Shhgit...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${NORMAL}"
+go install github.com/ffuf/ffuf/v2@latest
 
-if ! testcmd gitrob; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gitrob...${NORMAL}"
-    go get github.com/michenriksen/gitrob
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gitrob...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing httprobe...${NORMAL}"
+go install github.com/tomnomnom/httprobe@latest
 
-if ! testcmd ffuf; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${NORMAL}"
-    go get github.com/ffuf/ffuf
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-if ! testcmd unisub; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unisub...${NORMAL}"
-    go get -u github.com/tomnomnom/hacks/unisub
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing unisub...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-if ! testcmd aquatone; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing aquatone...${NORMAL}"
-    AQUATONE="aquatone-1.7.0.zip"
-    wget https://github.com/michenriksen/aquatone/releases/download/v1.7.0/aquatone_linux_amd64_1.7.0.zip -O $AQUATONE
-    unzip $AQUATONE -x LICENSE.txt -x README.md
-    sudo mv aquatone /usr/local/bin
-    rm -rf $AQUATONE
-fi
 
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing python tools${NORMAL}"
 echo "-----------------------------------------"
 
 
-if ! testcmd dnsgen; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsgen...${NORMAL}"
-    python3.7 -m pip install dnsgen --user
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsgen...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsgen...${NORMAL}"
+python3.7 -m pip install dnsgen --user
 
-if ! testcmd trufflehog; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${NORMAL}"
-    python3.7 -m pip install truffleHog --user
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${NORMAL}"
+python3.7 -m pip install truffleHog --user
 
-if ! testcmd scout; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${NORMAL}"
-    python3.7 -m pip install scoutsuite --user
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${NORMAL}"
+python3.7 -m pip install scoutsuite --user
 
-if ! testcmd aws; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${NORMAL}"
-    python3.7 -m pip install awscli --user
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${NORMAL}"
+python3.7 -m pip install awscli --user
 
 if ! testcmd wafw00f; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${NORMAL}"
@@ -363,15 +263,6 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -d "$TOOLS_DIR/Corsy" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Corsy...${NORMAL}"
-    git clone https://github.com/s0md3v/Corsy $TOOLS_DIR/Corsy
-    cd "$TOOLS_DIR/Corsy"
-    pip3.7 install -r requirements.txt --user
-    cd
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Corsy...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
 
 if [ ! -d "$TOOLS_DIR/flumberboozle" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing flumberboozle...${NORMAL}"
@@ -387,22 +278,6 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing bass...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if [ ! -d "$TOOLS_DIR/dirsearch" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dirsearch...${NORMAL}"
-    git clone https://github.com/maurosoria/dirsearch.git $TOOLS_DIR/dirsearch
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dirsearch...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-if [ ! -d "$TOOLS_DIR/Injectus" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Injectus...${NORMAL}"
-    git clone https://github.com/BountyStrike/Injectus $TOOLS_DIR/Injectus
-    cd $TOOLS_DIR/Injectus
-    pip3.7 install -r requirements.txt --user
-    cd
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Injectus...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
 
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing ruby tools${NORMAL}"
@@ -423,6 +298,12 @@ echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing misc tools${NORMAL}"
 echo "-----------------------------------------"
 
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing best-dns-wordlist.txt to $TOOLS_DIR...${NORMAL}"
+wget https://wordlists-cdn.assetnote.io/data/manual/best-dns-wordlist.txt -O $TOOLS_DIR/best-dns-wordlist.txt
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nuclei-templates to $TOOLS_DIR...${NORMAL}"
+git clone https://github.com/projectdiscovery/nuclei-templates.git
+
 if [ ! -f "$TOOLS_DIR/chromedriver" ]; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${NORMAL}"
     wget https://chromedriver.storage.googleapis.com/78.0.3904.105/chromedriver_linux64.zip -O chromedriver.zip
@@ -431,6 +312,15 @@ if [ ! -f "$TOOLS_DIR/chromedriver" ]; then
     rm -rf chromedriver.zip
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+fi
+
+if ! testcmd dnsvalidator; then
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsvalidator...${NORMAL}"
+    git clone https://github.com/vortexau/dnsvalidator.git
+    cd dnsvalidator
+    python3 setup.py install
+else
+    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsvalidator...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 
@@ -478,13 +368,6 @@ if [ ! -d "$TOOLS_DIR/wordlists/api_wordlists" ]; then
     git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-if [ ! -d "$TOOLS_DIR/wordlists/fuzz.txt" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${NORMAL}"
-    git clone https://github.com/Bo0oM/fuzz.txt.git $TOOLS_DIR/wordlists/fuzz.txt
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
 if [ ! -d "$TOOLS_DIR/wordlists/fuzz.txt" ]; then

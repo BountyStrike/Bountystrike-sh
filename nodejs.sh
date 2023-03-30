@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Should check system architecture before downloading this
 VERSION=v12.14.0
 DISTRO=linux-x64
 wget https://nodejs.org/dist/$VERSION/node-$VERSION-$DISTRO.tar.xz

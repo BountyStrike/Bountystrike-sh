@@ -28,61 +28,27 @@ runBanner(){
     echo -e "${GREEN}\n[+] Running $name...${RESET}"
 }
 
-okURLs() {
-    while read u; do
-        STATUS=$(curl -o /dev/null -s -w "%{http_code}" $u)
-        echo "$u [$STATUS]"
-        sleep 1
-    done < waybackurls.txt
-}
-
 domainExtract() {
     while read u; do
         curl -s $u | grep -Po "(\/)((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)*((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)((?:[a-zA-Z\-_\/\:\.0-9\{\}]+))" | sort -u | sed 's/^/http:\/\/URL/' >> paths.txt
     done < alive-js-files.txt
 }
 
-certdata(){
-	#give it patterns to look for within crt.sh for example %api%.site.com
-	declare -a arr=("api" "corp" "productioncontroller" "nonprod" "nonprod2" "jira" "lab" "dev" "uat" "test" "stag" "sandbox" "prod" "internal")
-	for i in "${arr[@]}"
-	do
-		#get a list of domains based on our patterns in the array
-        # shit doesn't work anymore, seems like "%" has been disabled.
-        # TODO: Fix or remove
-		curl -s https://crt.sh/\?q\=%25$i%25.$1\&output\=json | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | sed 's/ /\n/g'
-	done
-}
-
-certspotter(){ 
-curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u 
-}
-
 
 subdomainDiscovery() {
-    runBanner "Subdomain Discovery with amass, subfinder and gobuster"
+    runBanner "Subdomain Discovery with amass and subfinder"
     # Passively find subdomains
     # Kill amass after 120 seconds incase it hangs for some reason
     timeout 300s amass enum -passive -o $DOMAINS_FILE -log amass.log -d $TARGET &
     subfinder -d $TARGET > subfinder-$DOMAINS_FILE &
-    #gobuster dns -d $TARGET -w $TOOLS_DIR/seclists/Discovery/DNS/subdomains-top1million-5000.txt --output gobuster-$DOMAINS_FILE
+
     echo "[!] Waiting for amass and subfinder to finish..."
     wait
 
     cat subfinder-$DOMAINS_FILE >> $DOMAINS_FILE
-    #cat gobuster-$DOMAINS_FILE >> $DOMAINS_FILE
 
     # Remove files
     rm subfinder-$DOMAINS_FILE
-    #rm gobuster-$DOMAINS_FILE
-
-    runBanner "Certspotter"
-    certspotter $TARGET > certspotter.txt
-
-    #Rapid7 FDNS here
-
-    #runbanner "Brute forcing with commonspeak2 wordlist"
-    #gobuster dns -d $TARGET -w $TOOLS_DIR/wordlists/commonspeak2/subdomains/subdomains.txt --output gobuster-commonspeak2-$DOMAINS_FILE
 
     # run dnsgen only on new domains, skip if file exists.
     if [ ! -s dnsgen-domains.txt ]
@@ -116,12 +82,15 @@ subdomainDiscovery() {
     runBanner "Httprobe"
     cat $FINAL_DOMAINS | httprobe > alive.txt
 
+    runBanner "httpx"
+    cat $FINAL_DOMAINS | httpx -title -td -sc > httpx.txt
+
 }
 
 contentDiscovery(){
     runBanner "Wayback urls"
     # Find domains urls from wayback
-    cat final-domains.txt | waybackurls > waybackurls.txt
+    cat $FINAL_DOMAINS | waybackurls > waybackurls.txt
 
     # Maybe wayback has some uniq domains
     cat waybackurls.txt | unfurl domains | sort | uniq >> $FINAL_DOMAINS
@@ -162,26 +131,17 @@ networkDiscovery(){
     else
         echo -e "${RED}[-] Skipping Masscan, ips-$NOW.txt was empty or does not exist${RESET}"
     fi
-
 }
 
 visualDiscovery(){
     # Get Screenshots from online domains
-    runBanner "Aquatone"
-    cat alive.txt | aquatone -out aquatone
+    runBanner "gowitness"
+    cat alive.txt | gowitness file -f - 
 }
 
 vulnerabilityDiscovery(){
-    runBanner "Subdomain takeover checks"
-    subzy -targets $FINAL_DOMAINS | grep -i -v -E "not vulnerable|ERROR" | tee -a subtakeovers-$NOW.txt
-
-    # CRLF scanner here
-
-    # open redirerct scanner here
-
-    # github/gist search - https://github.com/gwen001/github-search/blob/master/github-endpoints.py?
-
-    # RetireJS here
+    runBanner "Nuclei"
+    nuclei -l alive.txt -o nuclei-$NOW.txt
 }
 
 
