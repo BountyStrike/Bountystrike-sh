@@ -1,8 +1,6 @@
 
 # Bountystrike-sh
 
-**Still in alpha stage**
-
 **Bountystrike-sh** is a collection of bash and python scripts that installs common bug bounty tools, performs recon scans and continous asset discovery.
 
 Bountystrike-sh is opensource but belongs to the BountyStrike project, self-hosted bug bounty management system.
@@ -82,14 +80,13 @@ Other stuff that will be installed as well:
 * Ruby
 
 ## Install
-Just run `bash install.sh` to get the bug hunting environment. So far only tested for Ubuntu 16.04.6 and 18.04.3 LTS.
+Just run `bash install.sh` to get the bug hunting environment. So far only tested for Ubuntu 22.04.
 
 ### Vagrant
 You also the have the option to use vagrant with virtualbox, just runt `vagrant up && vagrant ssh`. Create a folder called `data` in the root directory, vagrant will map it to `/vagrant_data` inside the VM.
 
 ## Running
 Simply run `./bstrike.sh <project> <domain>`. 
-
 
 ## Contributing
 Any feedback or ideas are welcome! Want to improve something? Create a pull request!

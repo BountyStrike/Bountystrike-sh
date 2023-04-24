@@ -5,8 +5,6 @@
 #              ~ dubsec ~                  #
 ############################################
 
-VERSION="1.0"
-
 PROJECT=""
 TARGET=""
 
@@ -28,12 +26,26 @@ runBanner(){
     echo -e "${GREEN}\n[+] Running $name...${RESET}"
 }
 
-domainExtract() {
+
+##
+# Extract URLs and paths from javascript files
+##
+URLPathExtract() {
     while read u; do
         curl -s $u | grep -Po "(\/)((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)*((?:[a-zA-Z\-_\:\.0-9\{\}]+))(\/)((?:[a-zA-Z\-_\/\:\.0-9\{\}]+))" | sort -u | sed 's/^/http:\/\/URL/' >> paths.txt
     done < alive-js-files.txt
 }
 
+##
+# This function takes a list of IPs and uses amass to find corresponding domain names.
+##
+IpDomainDiscovery() {
+    while read ip; do
+        amass intel -rf $TOOLS_DIR/resolvers.txt -ef $FINAL_DOMAINS -timeout 300 -active -addr $ip >> amass-intel.txt
+    done < $TARGET_IPS
+    cat amass-intel.txt | anew $FINAL_DOMAINS | puredns resolve -q --rate-limit 500 --resolvers $TOOLS_DIR/resolvers.txt | tee -a $FINAL_DOMAINS_RESOLVED | httpx -nc -title -td -sc | tee -a httpx.txt
+    sort -u httpx.txt -o httpx.txt
+}
 
 subdomainDiscovery() {
     runBanner "Subdomain Discovery with amass and subfinder"
@@ -54,10 +66,9 @@ subdomainDiscovery() {
     if [ ! -s dnsgen-domains.txt ]
     then
         runBanner "dnsgen"
-        dnsgen $DOMAINS_FILE > dnsgen-domains.txt
-        cat dnsgen-domains.txt | massdns --output S -q -r $TOOLS_DIR/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev | tee -a dnsgen-resolved.txt
-        # Sometimes resolvers respond with fake dns records, lets filter them out
-        cat dnsgen-resolved.txt | filter-resolved >> $DOMAINS_FILE
+        dnsgen --fast $DOMAINS_FILE > dnsgen-domains.txt
+        cat dnsgen-domains.txt | puredns resolve --rate-limit 500 --resolvers $TOOLS_DIR/resolvers.txt | tee -a dnsgen-resolved.txt
+        cat dnsgen-resolved.txt >> $DOMAINS_FILE
     else
         echo -e "${RED}[!] Skipping dnsgen since the file has already been generated.${RESET}"
     fi
@@ -68,66 +79,83 @@ subdomainDiscovery() {
     then
         comm -23 $DOMAINS_FILE $FINAL_DOMAINS > new-domains-$NOW.txt
         runBanner "dnsgen on new domains"
-        dnsgen new-domains-$NOW.txt > dnsgen-new-domains-$NOW.txt
+        dnsgen --fast new-domains-$NOW.txt > dnsgen-new-domains-$NOW.txt
         runBanner "massdns on new generated domains"
-        cat dnsgen-new-domains-$NOW.txt | massdns --output S -q -r $TOOLS_DIR/resolvers.txt | cut -d " " -f1 | rev | cut -c 2- | rev >> dnsgen-resolved-new-domains-$NOW.txt
-        cat dnsgen-resolved-new-domains-$NOW.txt| filter-resolved >> $DOMAINS_FILE
+        cat dnsgen-new-domains-$NOW.txt | puredns resolve --rate-limit 500 --resolvers $TOOLS_DIR/resolvers.txt >> dnsgen-resolved-new-domains-$NOW.txt
         sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
     else
         # Create Master domains file
         sort -u $DOMAINS_FILE -o $FINAL_DOMAINS
     fi
 
-    # Find HTTP servers from domains
-    runBanner "Httprobe"
-    cat $FINAL_DOMAINS | httprobe > alive.txt
-
     runBanner "httpx"
-    cat $FINAL_DOMAINS | httpx -title -td -sc > httpx.txt
+    cat $FINAL_DOMAINS | httpx -title -td -sc >> httpx.txt
+    sort -u httpx.txt -o httpx.txt
 
 }
 
 contentDiscovery(){
-    runBanner "Wayback urls"
-    # Find domains urls from wayback
-    cat $FINAL_DOMAINS | waybackurls > waybackurls.txt
+    runBanner "Gau"
+    # Find domains urls from via gau (wayback etc.)
+    cat $FINAL_DOMAINS | gau --threads 20 --timeout 3 --retries 2 --blacklist png,jpg,gif,otf,woff,woff2,tif > waybackurls.txt
 
     # Maybe wayback has some uniq domains
-    cat waybackurls.txt | unfurl domains | sort | uniq >> $FINAL_DOMAINS
+    cat waybackurls.txt | unfurl domains | sort -u | anew $FINAL_DOMAINS > newdomains.temp
+
+    # this could be a one-liner in the above command, but for some reason, puredns hangs if it receives an empty file
+    if [ -s newdomains.temp ]; then
+        # do alert logic here
+        cat newdomains.temp | puredns resolve -q --rate-limit 500 --resolvers $TOOLS_DIR/resolvers.txt >> $FINAL_DOMAINS
+    else
+        rm newdomains.temp
+    fi
+
     sort -u $FINAL_DOMAINS -o $FINAL_DOMAINS
 
     # Check URLs, 404 to external domains may be vulnarble to subdomain takeover
 
     runBanner "GetJS"
-    cat alive.txt | getJS -complete -output alive-js-files.txt
+    cat httpx.txt | cut -d " " -f1 | getJS --complete --output alive-js-files.txt
     sort -u alive-js-files.txt -o alive-js-files.txt
 
     runBanner "Extracting paths from js files"
-    domainExtract
+    URLPathExtract
 
     ## meg
     # find a good wordlist to use for brutforcing with meg
 
     ## One liner to import whole list of subdomains into Burp suite for automated scanning!
-    # cat <file-name> | parallel -j 200 curl -L -o /dev/null {} -x 127.0.0.1:8080 -k -s
+    # cat <file-name> | xargs -I {} -P 20 curl -L -o /dev/null {} -x 127.0.0.1:8080 -k -s
     # use burp proxy to populate burp with urls. Or maybe import files
 }
 
 networkDiscovery(){
-
+    mkdir scans
     # Find IP-addresses
     runBanner "Massdns"
-    cat $FINAL_DOMAINS | massdns --output S -q -r $TOOLS_DIR/resolvers.txt > massdns-$NOW.txt
-    cat massdns-$NOW.txt | grep -w -E A | cut -d " " -f3 > ips-$NOW.txt
+    cat $FINAL_DOMAINS | massdns --output S -q -r $TOOLS_DIR/resolvers.txt > scans/massdns-$NOW.txt
+    cat scans/massdns-$NOW.txt | grep -w -E A | cut -d " " -f3 > scans/ips-$NOW.txt
+   
 
-    if [ -s ips-$NOW.txt ]
+    if [ -s scans/ips-$NOW.txt ]
     then
         runBanner "Masscan"
         # Find open-ports on ip list
-        sudo masscan -iL ips.txt --rate 10000 -p10000,10243,1025,1026,1029,1030,1033,1034,1036,1038,110,1100,111,1111,113,119,123,135,137,139,143,1433,1434,1521,15567,161,1748,1754,1808,1809,199,20048,2030,2049,21,2100,22,22000,2222,23,25,25565,27900,2869,3128,3268,3269,32768,32843,32844,32846,3306,3339,3366,3372,3389,3573,35826,3632,36581,389,4190,43862,43871,44048,443,4443,4445,445,45295,4555,4559,464,47001,49152,49153,49154,49155,49156,49157,49158,49159,49160,49165,49171,49182,49327,49664,49665,49666,49667,49668,49669,49670,5000,5038,53,5353,5357,54987,55030,55035,55066,55067,55097,55104,55114,55116,55121,55138,55146,55167,55184,5722,5800,58633,587,5900,59010,59195,593,5985,6001,6002,6003,6004,6005,6006,6007,6008,6010,6011,6019,6144,631,636,64327,64337,6532,7411,745,7778,80,82,83,84,85,86,87,8000,8014,808,8080,81,8192,8228,88,8443,8008,8888,9389,9505,993,995 -oX masscan-$NOW.xml
+        sudo masscan -iL scans/ips-$NOW.txt --rate 500 -p10000,10243,1025,1026,1029,1030,1033,1034,1036,1038,110,1100,111,1111,113,119,123,135,137,139,143,1433,1434,1521,15567,161,1748,1754,1808,1809,199,20048,2030,2049,21,2100,22,22000,2222,23,25,25565,27900,2869,3128,3268,3269,32768,32843,32844,32846,3306,3339,3366,3372,3389,3573,35826,3632,36581,389,4190,43862,43871,44048,443,4443,4445,445,45295,4555,4559,464,47001,49152,49153,49154,49155,49156,49157,49158,49159,49160,49165,49171,49182,49327,49664,49665,49666,49667,49668,49669,49670,5000,5038,53,5353,5357,54987,55030,55035,55066,55067,55097,55104,55114,55116,55121,55138,55146,55167,55184,5722,5800,58633,587,5900,59010,59195,593,5985,6001,6002,6003,6004,6005,6006,6007,6008,6010,6011,6019,6144,631,636,64327,64337,6532,7411,745,7778,80,82,83,84,85,86,87,8000,8014,808,8080,81,8192,8228,88,8443,8008,8888,9389,9505,993,995 -oX scans/masscan-$NOW.xml
 
-        open_ports=$(cat masscan-$NOW.xml | grep portid | cut -d "\"" -f 10 | sort -n | uniq | paste -sd,)
-        sudo nmap -sVC -p$open_ports --open -v -T4 -Pn -iL $FINAL_DOMAINS -oG nmap-$NOW.txt
+        # This loop makes sure we only scan the ports open for a specific ip
+        while read ip; do
+            ports=$(grep $ip scans/masscan-$NOW.xml | grep portid | cut -d "\"" -f 10 | sort -n | uniq | paste -sd,)
+            if [[ -n $ports ]]; then
+                sudo nmap -n -sV $ip -p$ports --open -Pn -oG scans/nmap-$ip.og -vv
+            fi
+        done < scans/ips-$NOW.txt
+
+        cat scans/*.og | nmapclean > scans/ip-port-$NOW.list
+
+        cat scans/ip-port-$NOW.list| httpx -title -td -sc >> httpx.txt
+        sort -u httpx.txt -o httpx.txt
+
     else
         echo -e "${RED}[-] Skipping Masscan, ips-$NOW.txt was empty or does not exist${RESET}"
     fi
@@ -136,12 +164,12 @@ networkDiscovery(){
 visualDiscovery(){
     # Get Screenshots from online domains
     runBanner "gowitness"
-    cat alive.txt | gowitness file -f - 
+    cat httpx.txt | cut -d " " -f1 | gowitness file -f - 
 }
 
 vulnerabilityDiscovery(){
     runBanner "Nuclei"
-    nuclei -l alive.txt -o nuclei-$NOW.txt
+    cat httpx.txt | cut -d " " -f1 | nuclei -as -rl 20 -o nuclei-$NOW.txt
 }
 
 

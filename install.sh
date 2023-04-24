@@ -19,20 +19,42 @@ testcmd () {
     command -v "$1" >/dev/null
 }
 
+MACHINE=`uname -m`
+ARCH=""
+
+if [ $MACHINE = "aarch64" ]; then
+	ARCH="arm64"
+else
+	ARCH="amd64"
+fi
+
+
 # Wipe log file on every install
 echo "" > $LOGFILE
 
 installDocker() {
+    #sudo systemctl enable ntp
+    sudo apt install -y ca-certificates curl gnupg
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim git python-pip python3-pip build-essential libbz2-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev ntp
-    sudo systemctl enable ntp
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo add-apt-repository -y ppa:deadsnakes/ppa
-    sudo apt-get update
-    sudo pip install --upgrade pip
-    sudo pip install docker-compose
-    sudo apt-get -y install docker-ce docker-ce-cli containerd.io
+    sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-compose
+}
+
+select_random_lines() {
+  num_lines=$1
+  input=$(cat)
+
+  total_lines=$(echo "$input" | wc -l)
+
+  if [ "$num_lines" -gt "$total_lines" ]; then
+    echo "Error: Cannot select more lines than the input contains."
+    return 1
+  fi
+
+  echo "$input" | shuf -n "$num_lines"
 }
 
 installPython(){
@@ -62,11 +84,39 @@ installRuby(){
 }
 
 installMullvadVPN(){
-    # Should check system architecture before downloading this
-    MULLVADVPN_VERSION="2023.2_amd64"
-    wget "https://mullvad.net/media/app/MullvadVPN-$MULLVADVPN_VERSION.deb"
-    sudo dpkg -i "MullvadVPN-$MULLVADVPN_VERSION.deb"
-    rm "MullvadVPN-$MULLVADVPN_VERSION.deb"
+    if [ $ARCH="amd64" ]; then
+        cd ~/
+        MULLVADVPN_VERSION="2023.2_amd64"
+        wget "https://mullvad.net/media/app/MullvadVPN-$MULLVADVPN_VERSION.deb"
+        sudo dpkg -i "MullvadVPN-$MULLVADVPN_VERSION.deb"
+        rm "MullvadVPN-$MULLVADVPN_VERSION.deb"
+    else
+        echo -e "${BOLD}${LIGHT_YELLOW}[+] MullvadVPN only supports linux amd64${NORMAL}"
+    fi
+}
+
+installRust(){
+    if [ $ARCH="amd64" ]; then
+        wget https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
+    elif [ $ARCH="arm64" ]; then
+        wget https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init
+    else
+        echo -e "${BOLD}${LIGHT_YELLOW}[+] Unknown arch, did not install rust...${NORMAL}"
+        return
+    fi
+
+    chmod +x rustup-init
+    ./rustup-init -y
+    source "$HOME/.cargo/env"
+    git clone https://github.com/dandavison/delta.git
+    cd delta
+    # cargo build
+    # apparently this works better if you are low on memory, though a bit slower
+    cargo run --release --verbose --jobs 1
+    sudo cp target/release/delta /bin/delta
+    cd ..
+    rm -rf delta
+    rm rustup-init
 }
 
 echo -e "${BOLD}${LIGHT_CYAN}\n[~] Bountystrike environment installation${NORMAL}"
@@ -119,8 +169,8 @@ echo -e "${BOLD}${LIGHT_GREEN}[+] Updating system...${NORMAL}"
 sudo apt-get update
 sudo apt-get upgrade -y
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing git jq gcc make libpcap-dev unzip tmux chromium-browser software-properties-common chromium-chromedriver...${NORMAL}"
-sudo apt-get install -y git jq gcc make libpcap-dev unzip tmux chromium-browser chromium-chromedriver >> $LOGFILE 2>&1
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dependencies...${NORMAL}"
+sudo apt-get install -y autoconf chromium-browser apt-transport-https ca-certificates curl gnupg-agent software-properties-common vim git python3-pip build-essential libbz2-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev ntp unzip tmux jq libpcap-dev >> $LOGFILE 2>&1
 
 if ! testcmd docker; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Docker-CE...${NORMAL}"
@@ -136,19 +186,21 @@ else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Python-3.7.6...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-if ! testcmd ruby; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${NORMAL}"
-    installRuby
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+# i am not going to support ruby anymore
+#if ! testcmd ruby; then
+#    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${NORMAL}"
+#    installRuby
+#else
+#    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Ruby-2.6.3...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+#fi
 
-if ! testcmd npm; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${NORMAL}"
-    bash nodejs.sh
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+# i am not going to support nodejs anymore
+#if ! testcmd npm; then
+#    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${NORMAL}"
+#    bash nodejs.sh
+#else
+#    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing npm...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+#fi
 
 if ! testcmd mullvad; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing MullvadVPN...${NORMAL}"
@@ -161,8 +213,8 @@ if [ ! -x /usr/local/go/bin/go ]; then
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing golang...${NORMAL}"
     wget https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -O go1.20.2.linux-amd64.tar.gz
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.2.linux-amd64.tar.gz
-    rm -rf go1.20.2.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.20.2.linux-amd64.tar.gz
+    sudo rm -rf go1.20.2.linux-amd64.tar.gz
 
     echo -e "${BOLD}${LIGHT_GREEN}[+] Adding Go to PATH...${NORMAL}"
     echo "export GOPATH=$HOME/go" >> "$HOME/.profile"
@@ -184,7 +236,7 @@ echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing go tools${NORMAL}"
 echo "-----------------------------------------"
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Nuclei...${NORMAL}"
-go install -u github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+go install github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing puredns...${NORMAL}"
 go install github.com/d3mondev/puredns/v2@latest
@@ -204,9 +256,6 @@ go install github.com/OJ/gobuster/v3@latest
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing waybackurls...${NORMAL}"
 go install github.com/tomnomnom/waybackurls@latest
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fff...${NORMAL}"
-go get github.com/tomnomnom/fff
-
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing meg...${NORMAL}"
 go install github.com/tomnomnom/meg@latest
 
@@ -219,9 +268,6 @@ go install github.com/sensepost/gowitness@latest
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing GetJS...${NORMAL}"
 go install github.com/003random/getJS@latest
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Subzy...${NORMAL}"
-go install github.com/LukaSikic/subzy@latest
-
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Shhgit...${NORMAL}"
 go install github.com/eth0izzle/shhgit@latest
 
@@ -231,182 +277,141 @@ go install github.com/michenriksen/gitrob@latest
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing ffuf...${NORMAL}"
 go install github.com/ffuf/ffuf/v2@latest
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing httprobe...${NORMAL}"
-go install github.com/tomnomnom/httprobe@latest
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing anew...${NORMAL}"
+go install -v github.com/tomnomnom/anew@latest
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing gau...${NORMAL}"
+go install github.com/lc/gau/v2/cmd/gau@latest
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmapclean...${NORMAL}"
+go install github.com/dubs3c/nmapclean@latest
 
 
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing python tools${NORMAL}"
 echo "-----------------------------------------"
 
+echo "export PATH=$HOME/.local/bin:$PATH" >> "$HOME/.profile"
+source $HOME/.profile
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsgen...${NORMAL}"
-python3.7 -m pip install dnsgen --user
+pip install dnsgen --user
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing trufflehog...${NORMAL}"
-python3.7 -m pip install truffleHog --user
+pip install truffleHog --user
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing scoutsuite...${NORMAL}"
-python3.7 -m pip install scoutsuite --user
-
+pip install scoutsuite --user
 
 echo -e "${BOLD}${LIGHT_GREEN}[+] Installing awscli...${NORMAL}"
-python3.7 -m pip install awscli --user
+pip install awscli --user
 
 if ! testcmd wafw00f; then
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${NORMAL}"
     git clone https://github.com/EnableSecurity/wafw00f.git $TOOLS_DIR/wafw00f
     cd $TOOLS_DIR/wafw00f
-    python3.7 setup.py install --user
+    python3 setup.py install --user
     cd
 else
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing wafw00f...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
 fi
 
-
-if [ ! -d "$TOOLS_DIR/flumberboozle" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing flumberboozle...${NORMAL}"
-    git clone https://github.com/fellchase/flumberboozle $TOOLS_DIR/flumberboozle
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing flumberboozle...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-if [ ! -d "$TOOLS_DIR/bass" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing bass...${NORMAL}"
-    git clone https://github.com/Abss0x7tbh/bass $TOOLS_DIR/bass
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing bass...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-
-echo -e "\n-----------------------------------------"
-echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing ruby tools${NORMAL}"
-echo "-----------------------------------------"
-
-if [ ! -d "$TOOLS_DIR/WhatWeb" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${NORMAL}"
-    git clone https://github.com/urbanadventurer/WhatWeb.git $TOOLS_DIR/WhatWeb
-    cd $TOOLS_DIR/WhatWeb
-    bundle install
-    cd
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing WhatWeb to $TOOLS_DIR/...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
-
-
 echo -e "\n-----------------------------------------"
 echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing misc tools${NORMAL}"
 echo "-----------------------------------------"
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing best-dns-wordlist.txt to $TOOLS_DIR...${NORMAL}"
-wget https://wordlists-cdn.assetnote.io/data/manual/best-dns-wordlist.txt -O $TOOLS_DIR/best-dns-wordlist.txt
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing testssl...${NORMAL}"
+git clone --depth 1 https://github.com/drwetter/testssl.sh.git $TOOLS_DIR/testssl
 
-echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nuclei-templates to $TOOLS_DIR...${NORMAL}"
-git clone https://github.com/projectdiscovery/nuclei-templates.git
-
-if [ ! -f "$TOOLS_DIR/chromedriver" ]; then
+if [ $ARCH="amd64" ]; then
+    cd ~/
     echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${NORMAL}"
-    wget https://chromedriver.storage.googleapis.com/78.0.3904.105/chromedriver_linux64.zip -O chromedriver.zip
+    wget https://chromedriver.storage.googleapis.com/110.0.5481.77/chromedriver_linux64.zip -O chromedriver.zip
     unzip chromedriver.zip
-    sudo mv chromedriver $TOOLS_DIR
+    mv chromedriver $TOOLS_DIR
+    rm LICENSE.chromedriver
     rm -rf chromedriver.zip
 else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing chromedriver to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
+    echo -e "${BOLD}${LIGHT_YELLOW}[+] Chromedriver only supports linux amd64${NORMAL}"
 fi
 
-if ! testcmd dnsvalidator; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsvalidator...${NORMAL}"
-    git clone https://github.com/vortexau/dnsvalidator.git
-    cd dnsvalidator
-    python3 setup.py install
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsvalidator...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing dnsvalidator...${NORMAL}"
+git clone https://github.com/vortexau/dnsvalidator.git
+cd dnsvalidator
+sudo python3 setup.py install
+cd ..
 
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing massdns...${NORMAL}"
+git clone https://github.com/blechschmidt/massdns.git
+cd massdns
+make >> $LOGFILE 2>&1
+sudo mv bin/massdns /usr/local/bin
+cp lists/resolvers.txt $TOOLS_DIR/resolvers.txt
+cd ..
+rm -rf massdns
 
-if ! testcmd massdns; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing massdns...${NORMAL}"
-    git clone https://github.com/blechschmidt/massdns.git
-    cd massdns
-    make >> $LOGFILE 2>&1
-    sudo mv bin/massdns /usr/local/bin
-    cp lists/resolvers.txt $TOOLS_DIR/resolvers.txt
-    cd ..
-    rm -rf massdns
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing massdns...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing masscan...${NORMAL}"
+git clone https://github.com/robertdavidgraham/masscan
+cd masscan
+make -j >> $LOGFILE 2>&1
+sudo mv ./bin/masscan /usr/bin/
+cd ..
+rm -rf masscan
 
-if ! testcmd masscan; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing masscan...${NORMAL}"
-    git clone https://github.com/robertdavidgraham/masscan
-    cd masscan
-    make -j >> $LOGFILE 2>&1
-    sudo mv ./bin/masscan /usr/bin/
-    cd ..
-    rm -rf masscan
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing masscan...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${NORMAL}"
+git clone https://github.com/nmap/nmap.git
+cd nmap
+echo -e "${LIGHT_CYAN}[!] Configuring nmap...${NORMAL}"
+sh ./configure
+echo -e "${LIGHT_CYAN}[!] Running make nmap...${NORMAL}"
+make
+echo -e "${LIGHT_CYAN}[!] Runing make install nmap...${NORMAL}"
+sudo make install
+cd ..
+rm -rf nmap
 
-if [ ! -d "$TOOLS_DIR/seclists" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${NORMAL}"
-    git clone https://github.com/danielmiessler/SecLists.git $TOOLS_DIR/seclists
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing rust...${NORMAL}"
+installRust
 
-if [ ! -d "$TOOLS_DIR/wordlists/commonspeak2" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR...${NORMAL}"
-    git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "\n-----------------------------------------"
+echo -e "${BOLD}${LIGHT_YELLOW}[~] Installing wordlists${NORMAL}"
+echo "-----------------------------------------"
 
-if [ ! -d "$TOOLS_DIR/wordlists/api_wordlists" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${NORMAL}"
-    git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing SecLists to $TOOLS_DIR...${NORMAL}"
+git clone https://github.com/danielmiessler/SecLists.git $TOOLS_DIR/wordlists/seclists
 
-if [ ! -d "$TOOLS_DIR/wordlists/fuzz.txt" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${NORMAL}"
-    git clone https://github.com/Bo0oM/fuzz.txt.git $TOOLS_DIR/wordlists/fuzz.txt
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Bo0oM/fuzz.txt to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Commonspeak2 wordlists to $TOOLS_DIR...${NORMAL}"
+git clone https://github.com/assetnote/commonspeak2-wordlists $TOOLS_DIR/wordlists/commonspeak2
 
-if [ ! -d "$TOOLS_DIR/wordlists/Probable-Wordlists" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Probable-Wordlists to $TOOLS_DIR/wordlists...${NORMAL}"
-    git clone https://github.com/berzerk0/Probable-Wordlists $TOOLS_DIR/wordlists/Probable-Wordlists
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Probable-Wordlists to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing api_wordlist to $TOOLS_DIR/wordlists...${NORMAL}"
+git clone https://github.com/chrislockard/api_wordlist $TOOLS_DIR/wordlists/api_wordlists
 
-if [ ! -d "$TOOLS_DIR/wordlists/fuzzdb" ]; then
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fuzzdb to $TOOLS_DIR/wordlists...${NORMAL}"
-    git clone https://github.com/fuzzdb-project/fuzzdb $TOOLS_DIR/wordlists/fuzzdb
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing fuzzdb to $TOOLS_DIR/wordlists...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing Probable-Wordlists to $TOOLS_DIR/wordlists...${NORMAL}"
+git clone https://github.com/berzerk0/Probable-Wordlists $TOOLS_DIR/wordlists/Probable-Wordlists
 
-if ! testcmd nmap; then
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing jhaddix all.txt to $TOOLS_DIR/wordlists...${NORMAL}"
+wget https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt -O $TOOLS_DIR/wordlists/all.txt
 
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${NORMAL}"
-    git clone https://github.com/nmap/nmap.git
-    cd nmap
-    echo -e "${LIGHT_CYAN}[!] Configuring nmap...${NORMAL}"
-    sh ./configure
-    echo -e "${LIGHT_CYAN}[!] Running make nmap...${NORMAL}"
-    make
-    echo -e "${LIGHT_CYAN}[!] Runing make install nmap...${NORMAL}"
-    sudo make install
-    cd ..
-    rm -rf nmap
-else
-    echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap...${LIGHT_YELLOW}[ALREADY INSTALLED]${NORMAL}"
-fi
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing assetnote automated wordlists to $TOOLS_DIR/wordlists...${NORMAL}"
+wget -r --no-parent -R "index.html*" https://wordlists-cdn.assetnote.io/data/automated/ -nH
+mkdir $TOOLS_DIR/wordlists/assetnote
+mv data/automated $TOOLS_DIR/wordlists/assetnote/automated
+rm -rf data
+
+echo -e "${BOLD}${LIGHT_GREEN}[+] Installing nmap vulnscan...${NORMAL}"
+git clone https://github.com/scipag/vulscan.git $TOOLS_DIR/vulnscan
+cd $TOOLS_DIR/vulnscan
+bash update.sh
+cd ~/
+
+echo -e "\n-----------------------------------------"
+echo -e "${BOLD}${LIGHT_YELLOW}[~] Creating resolvers.txt - will return after 60 seconds${NORMAL}"
+echo "-----------------------------------------"
+timeout 60s dnsvalidator -tL https://public-dns.info/nameservers.txt -threads 15 -o $TOOLS_DIR/original-resolvers.txt
+cat $TOOLS_DIR/original-resolvers.txt | select_random_lines 15 > $TOOLS_DIR/resolvers.txt
+
+################### the end
+echo "export TOOLS_DIR=$HOME/tools" >> "$HOME/.profile"
 
 echo -e "${LIGHT_CYAN}\n[+] Looks like we are done? You may need to run source ~/.profile in order for some programs to take effect${NORMAL}"
 
